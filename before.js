@@ -7,9 +7,9 @@ import linebot from 'linebot';
 let app = express();
 
 let bot = linebot({
-  channelId: '1653889652',
-  channelSecret: 'b84a899c94948ec923bede4945a50051',
-  channelAccessToken: '3jH0ZxMELS5Jmfh6v7Fa3Q+IDBp65LW3xfSiSA7X4LK71Onx68zEwzx4ZjF9tqHPfKeThlYpxRTIVywc5RNMoUC5eEEX/q4T5OVfsfqXfp6AGc/se/ZlythAQ4h8C86ZQtZIPiAG3ogFyuXqaO53kAdB04t89/1O/w1cDnyilFU='
+  channelId: '< your channelId>>',
+  channelSecret: '< your channelSecret>>',
+  channelAccessToken: '< your channelAccessToken>>'
 });
 
 const linebotParser = bot.parser();
