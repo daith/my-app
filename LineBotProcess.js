@@ -18,7 +18,7 @@ export default class LineBotProcess {
 
 
     async init(){
-        console.log("There was an config data {}",this.lineBot);
+        // console.log("There was an config data {}",this.lineBot);
         this.lineBot.on('message', function(event) {
             // 把收到訊息的 event 印出來
             console.log(event);

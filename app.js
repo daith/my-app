@@ -5,6 +5,8 @@ import LineBotProcess from './LineBotProcess.js';
 
 let app = express();
 
+const botMap= new Map();
+
 // let bot = linebot({
 //   channelId: '1653889652',
 //   channelSecret: 'b84a899c94948ec923bede4945a50051',
@@ -152,20 +154,56 @@ let app = express();
 
 // app.post('/callback', linebotParser);
 
+app.post('/api/initBot/:id', (req, res) => {
+  const id = req.params.id;
+
+  lineConfig(id).then((result) => {
+
+    result.forEach(element => {
+      const config = {
+        'channelId':element.ChannelId,
+        'channelSecret':element.ChannelSecret,
+        'channelAccessToken':element.ChannelAccessToken
+      }
+
+      if(!botMap.has(element.ChannelId)){
+        const bot = new LineBotProcess(config);
+        bot.init()
+        console.log("There new bot config data {}",config);
+        botMap.set(element.ChannelId,bot)
+        console.log("There new bot botMap data {}",botMap);
+      }
+    });
+
+    let responseData={
+      'botMap':botMap
+    }
+    return res.send(responseData);
+
+    
+  })
+})
+
+app.get('/api/botMap', (req, res) => {
+  
+
+    let responseData={
+      'botMap':botMap
+    }
+    return res.send(responseData);
+
+    
+})
+
+
 app.post('/api/:id/callback', (req, res) => {
   const id = req.params.id;
-  lineConfig(id).then((result) => {
-    let config = {
-      'channelId':result.ChannelId,
-      'channelSecret':result.ChannelSecret,
-      'channelAccessToken':result.ChannelAccessToken
-    }
-    console.log("There was an config data {}",config);
-    let bot = new LineBotProcess(config);
-    bot.init()
-    bot.linebotParser(req, res);
+  console.log("There new bot channelId data {}",id);
 
-  })
+  if(botMap.has(id)){
+    const bot = botMap.get(id)
+    bot.linebotParser(req, res)
+  }
   // linebotParser(req, res);
 })
 
@@ -176,10 +214,11 @@ let server = app.listen(process.env.PORT || 3000, function() {
 });
 
 
-const lineConfig = function(channelId){
+const lineConfig = function(token){
 
-  let url ='https://api.baserow.io/api/database/rows/table/224804/?user_field_names=true&filters={"filter_type": "AND", "filters": [{"field": "ChannelId", "type": "equal", "value": "#channelId#"}]}'
-  url = url.replace("#channelId#", channelId)
+ const url ='https://api.baserow.io/api/database/rows/table/224804/?user_field_names=true&filters={"filter_type": "AND", "filters": [{"field": "Active", "type": "equal", "value": "1"}]}'
+ let header_info= 'Token #token#'
+ header_info = header_info.replace("#token#", token)
   console.log("There was an url---> {}",url);
 
 
@@ -187,10 +226,10 @@ const lineConfig = function(channelId){
     method: "get",
     url: url,
     headers: {
-      Authorization: `Token VSnbhPplQniz3b28A3h0KXrA2u02aCqx`,
+      Authorization: header_info,
     },
   }).then((response) => {
-    return response.data.results[0]
+    return response.data.results
   });
 
 }
