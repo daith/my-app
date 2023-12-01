@@ -1,4 +1,4 @@
-
+import axios from 'axios';
 import express from 'express';
 import linebot from 'linebot';
 
@@ -7,16 +7,16 @@ import linebot from 'linebot';
 let app = express();
 
 let bot = linebot({
-  channelId: '< your channelId>>',
-  channelSecret: '< your channelSecret>>',
-  channelAccessToken: '< your channelAccessToken>>'
+    channelId: '1653889652',
+    channelSecret: 'b84a899c94948ec923bede4945a50051',
+    channelAccessToken: '3jH0ZxMELS5Jmfh6v7Fa3Q+IDBp65LW3xfSiSA7X4LK71Onx68zEwzx4ZjF9tqHPfKeThlYpxRTIVywc5RNMoUC5eEEX/q4T5OVfsfqXfp6AGc/se/ZlythAQ4h8C86ZQtZIPiAG3ogFyuXqaO53kAdB04t89/1O/w1cDnyilFU=',
 });
 
-const linebotParser = bot.parser();
+const linebotParser = bot.parser()
 
 bot.on('message', function(event) {
     // 把收到訊息的 event 印出來
-    console.log(event);
+    // console.log(event);
 
     switch (event.message.type) {
       case 'text':
@@ -153,8 +153,28 @@ bot.on('message', function(event) {
 
 // app.post('/callback', linebotParser);
 
+// app.post('/api/:id/callback', (req, res) => {
+//     const id = req.params.id;
+//     lineConfig(id,'CdVF1zWUYwq8y73pxxiyt2HhrD8FIf4o').then((element) => {
+
+//         const config = {
+//             'channelId':element.ChannelId,
+//             'channelSecret':element.ChannelSecret,
+//             'channelAccessToken':element.ChannelAccessToken
+//           }
+//           bot.channelId =element.channelId
+//           bot.channelSecret =element.channelSecret
+//           bot.channelAccessToken =element.channelAccessToken
+//           console.log("My Line bot", bot);
+//           linebotParser(req, res);
+//         });
+       
+// })
+
 app.post('/api/:id/callback', (req, res) => {
-    linebotParser(req, res);
+    console.log("There  bot  data {}",bot);
+
+    bot.parser(req, res)
 })
 
 // 在 localhost 走 8080 port
@@ -164,4 +184,24 @@ let server = app.listen(process.env.PORT || 3000, function() {
 });
 
 
+const lineConfig = function(ChannelId,token){
 
+    let url ='https://api.baserow.io/api/database/rows/table/224804/?user_field_names=true&filters={"filter_type": "AND", "filters": [{"field": "ChannelId", "type": "equal", "value": "#ChannelId#"}]}'
+    url = url.replace("#ChannelId#", ChannelId)
+    let header_info= 'Token #token#'
+    header_info = header_info.replace("#token#", token)
+     console.log("There was an url---> {}",url);
+   
+   
+     return axios({
+       method: "get",
+       url: url,
+       headers: {
+         Authorization: header_info,
+       },
+     }).then((response) => {
+       return response.data.results[0]
+     });
+   
+   }
+   
