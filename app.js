@@ -1,24 +1,35 @@
-import axios from 'axios';
+
 import express from 'express';
 import LineBotProcess from './LineBotProcess.js';
-
+import BaserowApi from './baserowApi.js';
 
 // 在 localhost 走 8080 port
 const app = express();
+const baserowApi =new BaserowApi();
 
 
 const botMap= new Map();
 
 app.post('/api/initBot/:id', (req, res) => {
   const id = req.params.id;
+   init(id);
+  let responseData={
+    'botMap':botMap
+  }
+  return res.send(responseData);
+  
+})
 
-  lineConfig(id).then((result) => {
+
+function init(id){
+  baserowApi.getLineConfig(id).then((result) => {
 
     result.forEach(element => {
       const config = {
         'channelId':element.ChannelId,
         'channelSecret':element.ChannelSecret,
-        'channelAccessToken':element.ChannelAccessToken
+        'channelAccessToken':element.ChannelAccessToken,
+        'baserowToken': id
       }
 
       if(!botMap.has(element.ChannelId)){
@@ -28,24 +39,18 @@ app.post('/api/initBot/:id', (req, res) => {
         console.log("There new bot botMap data {}",botMap);
       }
     });
-
-    let responseData={
-      'botMap':botMap
-    }
-    return res.send(responseData);
-
-    
   })
-})
-
+}
 
 
 app.post('/api/:id/callback', (req, res) => {
   const id = req.params.id;
-  console.log("There new bot channelId data {}",id);
+  
 
   if(botMap.has(id)){
     const lineBotHandler = botMap.get(id)
+    console.log("There new bot channelId data {}",id);
+
     lineBotHandler.linebotParser(req, res);
   }
   // linebotParser(req, res);
@@ -55,25 +60,5 @@ app.post('/api/:id/callback', (req, res) => {
 let server = app.listen(process.env.PORT || 3000, function() {
     let port = server.address().port;
     console.log("My Line bot App running on port", port);
+    init("<-token for baseor->");
 });
-
-
-const lineConfig = function(token){
-
- const url ='https://api.baserow.io/api/database/rows/table/224804/?user_field_names=true&filters={"filter_type": "AND", "filters": [{"field": "Active", "type": "equal", "value": "1"}]}'
- let header_info= 'Token #token#'
- header_info = header_info.replace("#token#", token)
-  console.log("There was an url---> {}",url);
-
-
-  return axios({
-    method: "get",
-    url: url,
-    headers: {
-      Authorization: header_info,
-    },
-  }).then((response) => {
-    return response.data.results
-  });
-
-}

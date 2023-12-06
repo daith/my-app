@@ -1,0 +1,9 @@
+{
+    "graalvm.home": "",
+    "graalvm.installations": [
+        ""
+    ],
+    "terminal.integrated.env.osx": {
+        "GRAALVM_HOME": ""
+    }
+}
