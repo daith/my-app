@@ -19,10 +19,13 @@ export default class LineBotProcess {
       
         handleMessage(event) {
 
-          if(this.validatorPayment(event)){
-            event.reply('你還沒付錢～快去充值～吧～勇士們！');
-            return;
-          }
+          // if(this.validatorPayment(event)){
+          //   event.reply('你還沒付錢～快去充值～吧～勇士們！');
+          //   return;
+          // }
+
+          
+          
 
           switch (event.message.type) {
             case 'text':
@@ -83,11 +86,29 @@ export default class LineBotProcess {
               break;
             // 其他 text message 的處理邏輯
             default:
-              event.reply(event.message.text).then(function (data) {
-                console.log('Success', data);
-              }).catch(function (error) {
-                console.log('Error', error);
-              });
+              this.bot.push( event.source.userId,
+                    [{
+                      "type": "bubble",
+                      "hero": {
+                        "type": "image",
+                        "url": "https://scdn.line-apps.com/n/channel_devcenter/img/fx/01_1_cafe.png",
+                        "size": "full",
+                        "aspectRatio": "20:13",
+                        "aspectMode": "cover",
+                        "action": {
+                          "type": "uri",
+                          "uri": "http://linecorp.com/"
+                        }
+                      }
+                    }]
+                  )
+              console.log('Success', event);
+
+              // event.reply(event.message.text).then(function (data) {
+              //   console.log('Success', data);
+              // }).catch(function (error) {
+              //   console.log('Error', error);
+              // });
               break;
           }
         }
@@ -117,7 +138,10 @@ export default class LineBotProcess {
         }
 
         
+
       }
+
+      
 
       const saveArrayAsFile =  (arrayBuffer, filePath)=> {
         fs.writeFile(filePath, Buffer.from(arrayBuffer), 'binary',  (err)=> {

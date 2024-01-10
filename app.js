@@ -60,5 +60,5 @@ app.post('/api/:id/callback', (req, res) => {
 let server = app.listen(process.env.PORT || 3000, function() {
     let port = server.address().port;
     console.log("My Line bot App running on port", port);
-    init("<-token for baseor->");
+    init("CdVF1zWUYwq8y73pxxiyt2HhrD8FIf4o");
 });
