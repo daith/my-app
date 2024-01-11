@@ -39,9 +39,10 @@ app.post('/api/:id/callback', (req, res) => {
       return res.status(404).send('Bot configuration not found');
     }
     const client = botConfig.client;
-  
+   
     middleware(botConfig.lineConfig)(req, res, async () => {
       try {
+        console.log('Bot middleware  process....');
         const profile = await client.getProfile(req.body.events[0].source.userId);
         const userId = profile.userId;
         const userName = profile.displayName;
@@ -62,6 +63,7 @@ app.post('/api/:id/callback', (req, res) => {
   });
 
   function handleEvent(event, client, userId, userName, userPictureUrl) {
+    console.log('Bot handleEvent  process....');
     switch (event.type) {
             case 'message': //傳訊息給機器人
                 const message = event.message
