@@ -58,7 +58,7 @@ app.post('/api/:id/callback', (req, res) => {
 })
 
 // 在 localhost 走 8080 port
-let server = app.listen(process.env.PORT || 3000, function() {
+let server = app.listen(3000, function() {
     let port = server.address().port;
     console.log("My Line bot App running on port", port);
     init("CdVF1zWUYwq8y73pxxiyt2HhrD8FIf4o");
