@@ -17,46 +17,72 @@ export default class LineBotProcess {
           this.bot.on('message', this.handleMessage.bind(this));
         }
       
-        handleMessage(event) {
-
-          // if(this.validatorPayment(event)){
-          //   event.reply('你還沒付錢～快去充值～吧～勇士們！');
-          //   return;
-          // }
-
+        async  handleMessage(event) {
+          let validatorResult =  await this.validatorPayment(event);
+          console.log('validatorResult result    !!!!! , ',  validatorResult );
+          if(!validatorResult){
           
-          
+            if(event.message.type === 'text'){
+              let msg =  await this.checkPaymentCode(event);
+               console.log('checkPaymentCode  msg !!!!! , ',  msg );
+               if(msg  === 'CODE_ERROR'){
+                event.reply('你還沒付錢。你輸入的確認碼有誤～快去充值～吧～勇士們！');
+                return;
+              } else if(msg  === 'CODE_IS_USE'){
+                event.reply('你確定輸入的確認碼正確嗎？你還沒付錢～快去充值～吧～勇士們！');
+                return;
+              } else if(msg.startsWith("CODE_IS_CORRECT")){
+                const id =  msg.split("CODE_IS_CORRECT_")[1];
+                if(!this.handlePaymentFlow(event , id)){
+                  event.reply('喔喔～付錢失敗～～快去找人幫忙～吧～勇士們！');
+                  return;
+                }else{
+                  event.reply('付錢成功開始去玩吧～勇士們！');
+                  return;
 
-          switch (event.message.type) {
-            case 'text':
-              this.handleTextMessage(event);
-              break;
-            case 'image':
-              console.log(event);
-              this.handleImageMessage(event);
-              break;
-            case 'video':
-              event.reply('Nice video!');
-              break;
-            case 'audio':
-              event.reply('Nice audio!');
-              break;
-            case 'location':
-              event.reply(['That\'s a good location!', 'Lat:' + event.message.latitude, 'Long:' + event.message.longitude]);
-              break;
-            case 'follow':
-                this.handleRegister(event);
-                break;  
-            case 'sticker':
-              event.reply({
-                type: 'sticker',
-                packageId: 1,
-                stickerId: 1
-              });
-              break;
-            default:
-              event.reply('Unknown message: ' + JSON.stringify(event));
-              break;
+                }
+              } else{
+                event.reply('喔喔～你還沒付錢～快去充值～吧～勇士們！');
+                return;
+              }
+            }else{
+              event.reply('喔喔～你還沒付錢～快去充值～吧～勇士們！');
+              return;
+            }
+          }else{
+            
+            switch (event.message.type) {
+              case 'text':
+                this.handleTextMessage(event);
+                break;
+              case 'image':
+                console.log(event);
+                this.handleImageMessage(event);
+                break;
+              case 'video':
+                event.reply('Nice video!');
+                break;
+              case 'audio':
+                event.reply('Nice audio!');
+                break;
+              case 'location':
+                event.reply(['That\'s a good location!', 'Lat:' + event.message.latitude, 'Long:' + event.message.longitude]);
+                break;
+              case 'follow':
+                  this.handleRegister(event);
+                  break;
+              case 'sticker':
+                event.reply({
+                  type: 'sticker',
+                  packageId: 1,
+                  stickerId: 1
+                });
+                break;
+              default:
+                event.reply('Unknown message: ' + JSON.stringify(event));
+                break;
+            }
+
           }
         }
 
@@ -66,17 +92,54 @@ export default class LineBotProcess {
             const userId = profile.userId;
         
             const result = await this.baserowApi.getLineAccountPayment(this.baserowToken,userId,this.channelId);
-            console.log('validatorPayment  result!!!!! , ',  result.length > 0);
+            console.log('validatorPayment  result!!!!! , ',  result   ,  result.length > 0 , result.length > 0 && result[0]['LineId'] === userId);
 
-            return result.length > 0
+            return result.length > 0 && result[0]['LineId'] === userId
           } catch (error) {
             console.error('An error occurred:', error);
           }
         }
 
-        handleRegister(event) {
+        async checkPaymentCode(event) {
+          try {
+            const code = event.message.text;
+        
+            const result = await this.baserowApi.getPaymentCode(this.baserowToken,code,this.channelId);
+            
+            console.log('checkPaymentCode  result !!!!! , ',  result );
+            if(result.length == 0){
+              return 'CODE_ERROR';
+            } else if(result.length != 0 &&  result[0]['LineId'] !=''){
+              return 'CODE_IS_USE';
+            } else {
+              const id =result[0]['id'];
+              console.log('checkPaymentCode  result[0][id] !!!!! , ',   id);
+              return 'CODE_IS_CORRECT'+'_'+id;
+            }
+            
+          } catch (error) {
+            console.error('An error occurred:', error);
+          }
+        }
+
+        async handlePaymentFlow(event , rowId) {
+          try {
+            const profile = await event.source.profile();
+            const userId = profile.userId;
+              let data = {
+                'LineId':userId
+              }
+              const result = await this.baserowApi.paymentCodeBinding(this.baserowToken,rowId,data);
+
+              console.log('handlePaymentFlow  result !!!!! , ',  result );
+              return result.length > 0;
+              
+            } catch (error) {
+              console.error('An error occurred:', error);
+            }
           
         }
+        
         handleTextMessage(event) {
           switch (event.message.text) {
             case 'Me':
