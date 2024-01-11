@@ -10,6 +10,7 @@
     "dependencies": {
         "@line/bot-sdk": "^8.2.0",
         "axios": "^1.6.2",
-        "express": "^4.17.3"
+        "express": "^4.17.3",
+        "linebot": "^1.6.1"
     }
 }
