@@ -3,7 +3,7 @@
     "version": "0.0.0",
     "type": "module",
     "description": "An example LINE bot just to echo messages",
-    "main": "app.js",
+    "main": "inde.js",
     "scripts": {
         "start": "node ."
     },
