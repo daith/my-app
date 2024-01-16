@@ -92,6 +92,25 @@ export default class BaserowApi {
             },
             data: data
         });
+        return response.data;
+      }
+
+      async getScriptByChannelIdAndInputKey(token, channelId , inputKey) {
+        
+        let url ='https://api.baserow.io/api/database/rows/table/241127/?user_field_names=true&filters={"filter_type": "AND", "filters": [{"field": "ChannelId", "type": "equal", "value": "#channelId#"} , {"field": "InputKey", "type": "equal", "value": "#inputKey#"}]}'
+        let header_info= 'Token #token#'
+        header_info = header_info.replace("#token#", token)
+        url= url.replace("#channelId#", channelId).replace("#inputKey#", inputKey)
+
+        console.log('getScriptByChannelIdAndInputKey!!!!! , ',url);
+  
+        const response = await axios({
+            method: "get",
+            url: url,
+            headers: {
+                Authorization: header_info,
+            }
+        });
         return response.data.results;
       }
   }
