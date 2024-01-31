@@ -38,6 +38,7 @@ export default class LineBotProcess {
                   event.reply('喔喔～付錢失敗～～快去找人幫忙～吧～勇士們！');
                   return;
                 }else{
+                  
                   await this.handleScriptByChannelIdAndInputKe(event , "Init" )
                   event.reply('付錢成功開始去玩吧～勇士們！');
                   return;
@@ -128,19 +129,56 @@ export default class LineBotProcess {
         async handleScriptByChannelIdAndInputKe(event , inputKey ) {
           try {
             let result = await this.baserowApi.getScriptByChannelIdAndInputKey(this.baserowToken, this.channelId , inputKey)
-
-            if(result.length == 0){
-              let defaultMsg = await this.baserowApi.getScriptByChannelIdAndInputKey(this.baserowToken, this.channelId , "Default")
-              const index = Math.floor(Math.random() * defaultMsg.length)
-              console.log('handlePaymentFlow  defaultMsg   - index!!!!! , ',  defaultMsg , index , defaultMsg[index] );
-              result = [defaultMsg[index]]
-            }
             const profile = await event.source.profile();
             const displayName = profile.displayName;
             const userId = profile.userId;
+            const token = this.baserowToken;
+            const channelId = this.channelId;
+
+            let gameAccountData = {};
+
+            
+
+            if(result.length == 0){
+              result =await this.getRandomSentence(token, channelId , "WrongAnswer")
+            }
+
+              // await this.initAccountGameInfo(event , "Init" )
+              if(inputKey === "Init"){
+                gameAccountData =  await this.handleInitGameAccountInfo(token, channelId , userId , result[0]["Chapter"] ,  result[0]["Scenes"] )
+              }else{
+                let gameDataValueResult = await this.baserowApi.getAccountGameInfo(token, channelId , userId)
+                console.log("There gameDataValueResult" , gameDataValueResult)
+                if(gameDataValueResult.length == 0){
+                  gameAccountData =  await this.handleInitGameAccountInfo(token, channelId , userId , result[0]["Chapter"] ,result[0]["Scenes"])
+                }else{
+                  gameAccountData  = gameDataValueResult[0]
+                }
+              }
 
             // send init script
             let OutPutMsgArr = []
+            console.log("There result[0]" , result[0]["Scenes"] != "-1" , result[0]["Chapter"]+"_"+ result[0]["Scenes"]  ,gameAccountData["Chapter"]+"_"+gameAccountData["Scenes"] )
+            
+            if(result[0]["Scenes"] != "-1" && result[0]["Chapter"]+"_"+ result[0]["Scenes"] != gameAccountData["Chapter"]+"_"+gameAccountData["Scenes"] ){
+              let historyData = await this.baserowApi.getGameHistory(token, channelId , userId , result[0]["Chapter"] )
+              historyData.sort((a, b) => parseInt(a.Scenes) - parseInt(b.Scenes));
+              const lastLog = historyData.slice(-1);
+
+              console.log("There historyData , " , historyData)
+
+    
+              if(  historyData.length == 0 && result[0].Scenes!=1 ){
+                result = await this.getRandomSentence(token, channelId , "WrongAnswer")
+              }
+              else if(historyData.length != 0 && parseInt( lastLog[0].Scenes) >  parseInt( result[0].Scenes)){
+                result =await this.getRandomSentence(token, channelId , "GameIsDone")
+
+              }else if(historyData.length != 0 && (parseInt( result[0].Scenes) - parseInt( lastLog[0].Scenes) >1 )){
+                result = await this.getRandomSentence(token, channelId , "WrongAnswer")
+
+              }
+            }
 
             for (const scriptRecord of result) {
               
@@ -201,6 +239,11 @@ export default class LineBotProcess {
             }
 
             this.handleSendMessage(OutPutMsgArr , event   ) 
+
+            if(result[0]["Scenes"] != "-1" && result[0]["Chapter"]+"_"+ result[0]["Scenes"] != gameAccountData["Chapter"]+"_"+gameAccountData["Scenes"] ){
+              this.updateGameAccountInfo(token, channelId , userId , result[0]["Chapter"], result[0]["Scenes"] , gameAccountData["id"])
+
+            }
             
             } catch (error) {
               console.error('An error occurred:', error);
@@ -232,12 +275,12 @@ export default class LineBotProcess {
           this.bot.push( event.source.userId,scriptRecords  )
         }
         
-        handleTextMessage(event) {
+        async handleTextMessage(event) {
           let userMsg = event.message.text ;
           this.handleScriptByChannelIdAndInputKe(event , userMsg )
         }
       
-        handleImageMessage(event) {
+        async handleImageMessage(event) {
           
           event.message.content().then(function (data) {
             console.log(data);
@@ -261,11 +304,49 @@ export default class LineBotProcess {
           });
         }
 
+        async handleInitGameAccountInfo(token, channelId , lineId , chapter, scenes){
+              let gameDataValueResult = await this.baserowApi.getAccountGameInfo(token , channelId , lineId)
+              let gameData = {
+                "ChannelId": channelId,
+                "LineId": lineId,
+                "Chapter": chapter,
+                "Scenes": scenes,
+            }
+            console.log('handleInitGameAccountInfo  result !!!!! , ',  gameDataValueResult );
+
+              if(gameDataValueResult.length == 0){
+                
+                let gameDataValueData = await this.baserowApi.createAccountGameInfo(token, gameData);
+                return gameDataValueData;
+              }else {
+                let gameDataValueData = await this.baserowApi.updateAccountGameInfo(token, gameDataValueResult[0]["id"] , gameData)
+                return gameDataValueData;
+              }
+        }
+
+        async updateGameAccountInfo(token, channelId , lineId , chapter, scenes  , rowId){
+          let gameData = {
+            "ChannelId": channelId,
+            "LineId": lineId,
+            "Chapter": chapter,
+            "Scenes": scenes,
+        }
+
         
+        let updateAccountGameInfo = await this.baserowApi.updateAccountGameInfo(token, rowId , gameData)
+
+        let createGameHistory = await  this.baserowApi.createGameHistory(token, gameData)
+
+        }
+
+        async getRandomSentence(token, channelId , sentenceKey){
+
+          let defaultMsg = await this.baserowApi.getScriptByChannelIdAndInputKey(token, channelId, sentenceKey)
+          const index = Math.floor(Math.random() * defaultMsg.length)
+          return [defaultMsg[index]] 
+        }
 
       }
-
-      
 
       const saveArrayAsFile =  (arrayBuffer, filePath)=> {
         fs.writeFile(filePath, Buffer.from(arrayBuffer), 'binary',  (err)=> {
