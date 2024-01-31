@@ -11,6 +11,7 @@
         "@line/bot-sdk": "^8.2.0",
         "axios": "^1.6.2",
         "express": "^4.17.3",
+        "forever": "^0.14.2",
         "linebot": "^1.6.1"
     }
 }
